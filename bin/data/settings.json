@@ -1,0 +1,11 @@
+{
+    "numPixelsPerLED": 1,
+    "output" : {
+        "width": 16,
+        "height": 8
+    },
+    "wiring": "rowMajor",
+    "movieOrigin": "bottomLeft",
+    "midiChannel": 2,
+    "constantRefresh": true
+}
