@@ -1,0 +1,3 @@
+ofxDmx
+ofxMidi
+ofxGuiMappable
