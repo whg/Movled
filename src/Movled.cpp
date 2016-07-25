@@ -61,9 +61,11 @@ void Movled::update(){
         if (movie->video.isFrameNew()) {
             int w = mSettings["output"]["width"];
             int h = mSettings["output"]["height"];
-            int step = mSettings["numPixelsPerLED"];
+//            int step = mSettings["numPixelsPerLED"];
 
             auto pix = movie->video.getPixels();
+            
+            int step = pix.getWidth() / w;
             
             if (pix.getWidth() < w * step) {
                 logMessage("movie for " + movie->name + " is not wide enough, needs " +
@@ -86,7 +88,7 @@ void Movled::update(){
             if (mSettings["movieOrigin"] == "bottomLeft") {
                 for (int i = 0; i < w; i++) {
                     for (int j = 0; j < h; j++) {
-                        auto col = pix.getColor(i * step, pix.getHeight() - j * step);
+                        auto col = pix.getColor(i * step + step / 2, pix.getHeight() - j * step + step / 2);
                         mLEDColours[mWiringCache[index++]] = col;
                     }
                 }
