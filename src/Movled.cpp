@@ -66,60 +66,87 @@ void Movled::update(){
             auto pix = movie->video.getPixels();
             
             int step = pix.getWidth() / w;
+//            cout << step << "," << w << ", " << h << endl;
             
             if (pix.getWidth() < w * step) {
                 logMessage("movie for " + movie->name + " is not wide enough, needs " +
                             ofToString(w * step) + ", found " + ofToString(pix.getWidth()));
                mCurrentMovieIndex = DONT_PLAY;
             }
-            
-            if (pix.getHeight() < h * step) {
+            else if (pix.getHeight() < h * step) {
                 logMessage("movie for " + movie->name + " is not high enough, needs " +
                            ofToString(h * step) + ", found " + ofToString(pix.getHeight()));
                 mCurrentMovieIndex = DONT_PLAY;
             }
+            else {
             
-            if (mLEDColours.size() < w * h) {
-                mLEDColours.resize(w * h);
-                setWiringCache(mSettings["wiring"], w, h);
-            }
-            
-            size_t index = 0;
-            if (mSettings["movieOrigin"] == "bottomLeft") {
-                for (int i = 0; i < w; i++) {
-                    for (int j = 0; j < h; j++) {
-                        auto col = pix.getColor(i * step + step / 2, pix.getHeight() - j * step + step / 2);
-                        mLEDColours[mWiringCache[index++]] = col;
+                if (mLEDColours.size() < w * h) {
+                    mLEDColours.resize(w * h);
+                    setWiringCache(mSettings["wiring"], w, h);
+                }
+                
+                size_t index = 0;
+                if (mSettings["movieOrigin"] == "bottomLeft") {
+                    for (int i = 0; i < w; i++) {
+                        for (int j = 0; j < h; j++) {
+                            auto col = pix.getColor(i * step + step / 2, pix.getHeight() - j * step - step / 2);
+                            mLEDColours[mWiringCache[index++]] = col;
+                        }
                     }
                 }
-            }
-            else if (mSettings["movieOrigin"] == "topLeft") {
-                for (int i = 0; i < w; i++) {
-                    for (int j = 0; j < h; j++) {
-                        auto col = pix.getColor(i * step, j * step);
-                        mLEDColours[mWiringCache[index++]] = col;
+                else if (mSettings["movieOrigin"] == "topLeft") {
+                    for (int i = 0; i < w; i++) {
+                        for (int j = 0; j < h; j++) {
+                            auto col = pix.getColor(i * step + step / 2, j * step + step / 2);
+                            mLEDColours[mWiringCache[index++]] = col;
+                        }
                     }
                 }
+                
+                
+                mCurrentMoviePosition = movie->video.getPosition();
+                
+                if (!mMovieTexture.isAllocated()) {
+                    mMovieTexture.allocate(w, h, GL_RGB);
+                }
+                
+                ofPixels texPixels;
+                texPixels.allocate(w, h, 3);
+                for (int i = 0; i < w; i++) {
+                    for (int j = 0; j < h; j++) {
+//                        auto col = pix.getColor(i * step + step / 2, j * step + step / 2);
+                        auto col = mLEDColours[i + j * w];
+                        texPixels.setColor(i, j, col);
+                    }
+                }
+                
+                mMovieTexture.loadData(texPixels);
             }
-            
-            
-            mCurrentMoviePosition = movie->video.getPosition();
-            
-            if (!mMovieTexture.isAllocated()) {
-                mMovieTexture.allocate(w, h, GL_RGB);
-            }
-            
-            mMovieTexture.loadData(pix);
         }
     }
     
     if (mDmx.isConnected()) {
-        for (size_t i = 0; i < mLEDColours.size(); i++) {
-            auto &colour = mLEDColours[i];
-            mDmx.setLevel(i * 3 + 1, static_cast<unsigned char>(colour.r));
-            mDmx.setLevel(i * 3 + 3, static_cast<unsigned char>(colour.g));
-            mDmx.setLevel(i * 3 + 2, static_cast<unsigned char>(colour.b));
+        
+//        cout << (i + box * nOnBox) << " :: "  << mLEDColours.size() << endl;
+        const size_t nOnBox = 8;
+        for (size_t box = 0; box < 3; box++) {
+            for (size_t i = 0; i < nOnBox && i + box * nOnBox < mLEDColours.size(); i++) {
+                auto &colour = mLEDColours[i + box * nOnBox];
+//cout << (i + box * nOnBox) << " :: "  << mLEDColours.size() << endl;
+//                ofColor colour(255, 255, 255);
+                size_t baseIndex = i * 3 + box * 48;
+                mDmx.setLevel(baseIndex + 1, static_cast<unsigned char>(colour.r));
+                mDmx.setLevel(baseIndex + 3, static_cast<unsigned char>(colour.g));
+                mDmx.setLevel(baseIndex + 2, static_cast<unsigned char>(colour.b));
+            }
         }
+//        for (size_t i = 0; i < mLEDColours.size(); i++) {
+//            auto &colour = mLEDColours[i];
+//            mDmx.setLevel(i * 3 + 1, static_cast<unsigned char>(colour.r));
+//            mDmx.setLevel(i * 3 + 3, static_cast<unsigned char>(colour.g));
+//            mDmx.setLevel(i * 3 + 2, static_cast<unsigned char>(colour.b));
+//        }
+        mDmx.update();
     }
     else if (ofGetFrameNum() % 15 == 0) {
         connectToDmxDevice();
@@ -134,7 +161,8 @@ void Movled::update(){
 void Movled::draw(){
 
     if (mMovieTexture.isAllocated()) {
-        int scale = 4;
+        mMovieTexture.setTextureMinMagFilter(GL_NEAREST, GL_NEAREST);
+        int scale = 10;
         mMovieTexture.draw(0, ofGetHeight() - (mMovieTexture.getHeight() * scale),
                            mMovieTexture.getWidth() * scale, mMovieTexture.getHeight() * scale);
     }
@@ -301,6 +329,10 @@ void Movled::setWiringCache(string scheme, int width, int height) {
         logMessage("don't understand " + scheme + " wiring scheme");
     }
     
+    for (int i = 0; i < mWiringCache.size(); i++) {
+        cout << i << " : " << mWiringCache[i] << endl;
+    }
+    
 }
 
 void Movled::connectToDmxDevice() {
@@ -333,11 +365,13 @@ void Movled::playMovieAtIndex(size_t index) {
 
     if (mCurrentMovieIndex != DONT_PLAY) {
         mMovies[mCurrentMovieIndex]->video.stop();
+        mMovies[mCurrentMovieIndex]->triggerPlay = false;
     }
 
     mCurrentMovieIndex = index;
     mMovies[index]->video.setFrame(0);
     mMovies[index]->video.play();
+    mMovies[index]->video.setLoopState(OF_LOOP_NONE);
     logMessage("started playing " + mMovies[index]->name);
 }
 
