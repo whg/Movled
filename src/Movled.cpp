@@ -125,6 +125,10 @@ void Movled::update(){
         }
     }
     
+    for (int i =1; i < 500; i++) {
+        mDmx.setLevel(i, 0);
+    }
+    
     if (mDmx.isConnected()) {
         
 //        cout << (i + box * nOnBox) << " :: "  << mLEDColours.size() << endl;
@@ -146,11 +150,12 @@ void Movled::update(){
 //            mDmx.setLevel(i * 3 + 3, static_cast<unsigned char>(colour.g));
 //            mDmx.setLevel(i * 3 + 2, static_cast<unsigned char>(colour.b));
 //        }
-        mDmx.update();
     }
     else if (ofGetFrameNum() % 15 == 0) {
         connectToDmxDevice();
     }
+    
+    mDmx.update();
     
     if (mSettings["constantRefresh"] && ofGetFrameNum() % 30 == 0) {
         loadSettings();
@@ -274,6 +279,11 @@ void Movled::newMidiMessage(ofxMidiMessage& msg) {
             }
         }
     }
+    
+    if ((msg.status
+     == MIDI_CONTROL_CHANGE && msg.control == 123) || msg.status == MIDI_STOP) {
+        stopMovie();
+    }
 }
 
 void Movled::midiInputDeviceChange(ofxRadioGroupEventArgs &args) {
@@ -302,6 +312,7 @@ void Movled::logMessage(string message) {
 //////////// Settings
 
 void Movled::loadSettings() {
+    cout << "loading from: " << ofToDataPath("settings.json") << endl;
     std::ifstream f(ofToDataPath("settings.json"));
     mSettings = nlohmann::json::parse(f);
     
@@ -327,10 +338,6 @@ void Movled::setWiringCache(string scheme, int width, int height) {
     }
     else {
         logMessage("don't understand " + scheme + " wiring scheme");
-    }
-    
-    for (int i = 0; i < mWiringCache.size(); i++) {
-        cout << i << " : " << mWiringCache[i] << endl;
     }
     
 }

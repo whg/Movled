@@ -1,4 +1,12 @@
 track_name,video_path,midi_note
-two hearts, /Users/whg/Movies/nexus-sky box.mp4, 120
+// comments, like this line, are ignored and start with a //
 //two hearts, /Users/whg/Movies/nexus-sky box.mp4, 120
-something else, /Users/whg/Movies/seven3x3_testing.mov, 121
+//something else, /Users/whg/Movies/seven3x3_testing.mov, 121
+middle out, /Users/whg/Desktop/middle_out.mp4, 1
+lines, /Users/whg/Desktop/lines_consecutive.mp4, 2
+front, /Users/whg/Desktop/front_lilne.mov, 3
+compass points, /Users/whg/Google Drive/NZCA LINES FINAL DRAFTS/Compass Points_Lights.mov, 123
+do it better, /Users/whg/Google Drive/NZCA LINES FINAL DRAFTS/Do It Better_Lights.mov, 125
+persephone dreams, /Users/whg/Google Drive/NZCA LINES FINAL DRAFTS/Persephone Dreams_Lights.mov, 121
+two hearts, /Users/whg/Google Drive/NZCA LINES FINAL DRAFTS/Two Hearts_Lights.mov, 120
+work, /Users/whg/Google Drive/NZCA LINES FINAL DRAFTS/Work_Lights.mov, 122
